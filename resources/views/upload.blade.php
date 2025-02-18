@@ -21,7 +21,7 @@
             <option value="mov">MOV</option>
         </select><br>
 
-        <button type="submit">Upload Video</button>
+        <button type="submit">Convert</button>
     </form>
 
     <!-- Display success message and download link if available -->
