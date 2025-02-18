@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use FFMpeg\FFMpeg;
 
 
 class VideoController extends Controller
@@ -16,26 +17,39 @@ class VideoController extends Controller
     public function handleUpload(Request $request)
     {
         $request->validate([
-            'video' => 'required|mimes:mp4,avi,mkv,mov,flv,wmv|max:50000', // Max size in KB (50MB in this case)
+            'video' => 'required|mimes:mp4,avi,mkv,mov,flv,wmv|max:50000', // Max size limit
         ]);
 
         // Handle the uploaded file and store it temporarily
         $video = $request->file('video');
-        $path = $video->storeAs('temp', time() . '.' . $video->extension(), 'public'); // Temporary storage
+        $tempPath = $video->storeAs('temp', time() . '.' . $video->extension(), 'public');
 
-        // Perform the conversion (to be implemented)
-        $convertedVideo = $this->convertVideo($path);
+        // Convert the video
+        $convertedVideo = $this->convertVideo($tempPath);
 
-        // After conversion, delete the temporary video
-        Storage::disk('public')->delete($path);
+        // Delete the temporary video file
+        Storage::disk('public')->delete($tempPath);
 
-        // Return download link to the user
+        // Return success message and converted video path
         return back()->with('success', 'Video uploaded and converted successfully!')->with('convertedVideo', $convertedVideo);
     }
 
-    private function convertVideo($path)
+    private function convertVideo($tempPath)
     {
-        // Use FFmpeg to convert the video here and return the path of the converted video
-        // This will be the next step to implement
+        // Initialize FFmpeg
+        $ffmpeg = FFMpeg::create([
+            'ffmpeg.binaries' => storage_path('app/ffmpeg/ffmpeg'),
+            'ffprobe.binaries' => storage_path('app/ffmpeg/ffprobe'),
+        ]);
+
+        // Get the file name and extension
+        $videoName = pathinfo($tempPath, PATHINFO_FILENAME);
+        $convertedPath = 'videos/' . $videoName . '.mp4'; // Example: Convert to MP4 format
+
+        // Perform the conversion (input file: $tempPath, output file: $convertedPath)
+        $ffmpeg->open(storage_path('app/' . $tempPath))
+            ->save(new \FFMpeg\Format\Video\X264(), storage_path('app/public/' . $convertedPath));
+
+        return $convertedPath;
     }
 }
