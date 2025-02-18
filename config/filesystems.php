@@ -46,6 +46,12 @@ return [
             'throw' => false,
             'report' => false,
         ],
+            
+        'temp' => [
+            'driver' => 'local',
+            'root' => storage_path('app/temp'),  // Temporary folder for uploaded videos
+            'visibility' => 'private', // No need for public access
+        ],
 
         's3' => [
             'driver' => 's3',
